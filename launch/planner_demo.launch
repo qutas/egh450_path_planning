@@ -1,0 +1,27 @@
+<?xml version='1.0'?>
+<launch>
+	<!-- Navigator Node -->
+	<node pkg="egh450_path_planning" type="planner" name="planner" clear_params="true" output="screen">
+		<param name="goal_start_x" value="-1.5"/>
+		<param name="goal_start_y" value="-1.5"/>
+		<param name="goal_end_x" value="1.5"/>
+		<param name="goal_end_y" value="1.5"/>
+		<param name="goal_height" value="1.5"/>
+
+		<!-- These topics need to be remapped correctly! -->
+		<!-- Input to contrail for path tracking -->
+		<remap from="~path" to="path"/>
+		<!-- Service to request a safe path from breadcrumb -->
+		<remap from="~request_path" to="request_path"/>
+	</node>
+
+	<!-- Breadcrumb Node -->
+	<node pkg="breadcrumb" type="breadcrumb_node" name="breadcrumb" clear_params="true" output="screen">
+		<param name="search_heuristic" value="1" type="int"/>
+		<param name="allow_diagonals" value="true" type="bool"/>
+		<param name="obstacle_threshold" value="50" type="int"/>
+
+		<!-- Occupancy grid input -->
+		<remap from="grid" to="/grid"/>
+	</node>
+</launch>
