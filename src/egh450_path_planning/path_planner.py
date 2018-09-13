@@ -43,7 +43,7 @@ class PathPlanner():
 		req.end.y = self.end_y
 		req.end.z = self.height
 
-		res = self.srvc_bc(req);
+		res = self.srvc_bc(req)
 
 		if len(res.path.poses) > 0:
 			rospy.loginfo("[NAV] Path planned, preparing to transmit")
