@@ -9,6 +9,12 @@ from geometry_msgs.msg import PoseStamped
 from breadcrumb.srv import RequestPath
 from breadcrumb.srv import RequestPathRequest
 
+import actionlib
+from actionlib_msgs.msg import GoalStatus
+
+from contrail.msg import TrajectoryAction, TrajectoryGoal
+from geometry_msgs.msg import Vector3
+
 class PathPlanner():
 	def __init__(self):
 		self.start_x = float(rospy.get_param("~goal_start_x"))
