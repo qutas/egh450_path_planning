@@ -102,16 +102,10 @@ class PathPlanner():
 				goal_base = TrajectoryGoal()
 
 				# Start point
-				if i == 0:
-					goal_base.positions.append(req.start)
-				else:
-					goal_base.positions.append(res.path.poses[i].position)
+				goal_base.positions.append(res.path.poses[i].position)
 				goal_base.yaws.append(0.0)
 				# End point
-				if i < (len(res.path.poses) - 1):
-					goal_base.positions.append(res.path.poses[i].position)
-				else:
-					goal_base.positions.append(req.end)
+				goal_base.positions.append(res.path.poses[i+1].position)
 				goal_base.yaws.append(0.0)
 
 				goal_base.duration = rospy.Duration.from_sec(10)
