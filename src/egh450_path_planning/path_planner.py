@@ -17,20 +17,61 @@ class PathPlanner():
 		self.end_y = float(rospy.get_param("~goal_end_y"))
 		self.height = float(rospy.get_param("~goal_height"))
 
-		# Needs to be connected to contrail
-		self.pub_path = rospy.Publisher('~path', Path, queue_size=10, latch=True)
-
 		# Wait for the breadcrumb interface to start up
 		# then prepare a Service Client
 		rospy.loginfo("[NAV] Waiting to connect with Breadcrumb")
 		rospy.wait_for_service('~request_path')
 		self.srvc_bc = rospy.ServiceProxy('~request_path', RequestPath)
 
+		rospy.loginfo("Waiting for contrail to connect...")
+		client_base = actionlib.SimpleActionClient(rospy.get_param('~contrail'), TrajectoryAction)
+		client_base.wait_for_server()
+
+		# Needs to be connected to contrail
+		self.pub_path = rospy.Publisher('~planned_path', Path, queue_size=10, latch=True)
+
 		self.request_path()
 
 	def shutdown(self):
 		# Unregister anything that needs it here
 		pass
+
+	def path_display(self, path, start, end):
+		msg_out = Path()
+		msg_out.header = path.header
+
+		#Insert the start pose
+		ps = PoseStamped()
+		ps.header = path.header
+		ps.pose.position = start
+		ps.pose.orientation.w = 1.0
+		ps.pose.orientation.x = 0.0
+		ps.pose.orientation.y = 0.0
+		ps.pose.orientation.z = 0.0
+		msg_out.poses.append(ps)
+
+		# Instert the path recieved from breadcrumb
+		for sp in res.path.poses:
+			p = PoseStamped()
+			p.header = path.header
+			p.pose.position = sp.position
+			p.pose.orientation.w = 1.0
+			p.pose.orientation.x = 0.0
+			p.pose.orientation.y = 0.0
+			p.pose.orientation.z = 0.0
+			msg_out.poses.append(p)
+
+		#Insert the end pose
+		pe = PoseStamped()
+		pe.header = path.header
+		pe.pose.position = end
+		pe.pose.orientation.w = 1.0
+		pe.pose.orientation.x = 0.0
+		pe.pose.orientation.y = 0.0
+		pe.pose.orientation.z = 0.0
+		msg_out.poses.append(pe)
+
+		self.pub_path.publish(msg_out)
 
 	def request_path(self):
 		#Request a path from breadcrumb
@@ -47,42 +88,34 @@ class PathPlanner():
 
 		if len(res.path.poses) > 0:
 			rospy.loginfo("[NAV] Path planned, preparing to transmit")
+			path_display(res.path, req.start, req.end)
 
-			msg_out = Path()
-			msg_out.header = res.path.header
+			for i in xrange(len(req.path.poses)):
+				# Build new goal message
+				# https://github.com/qutas/contrail/blob/master/contrail/action/Trajectory.action
+				goal_base = TrajectoryGoal()
 
-			#Insert the start pose
-			ps = PoseStamped()
-			ps.header = res.path.header
-			ps.pose.position = req.start
-			ps.pose.orientation.w = 1.0
-			ps.pose.orientation.x = 0.0
-			ps.pose.orientation.y = 0.0
-			ps.pose.orientation.z = 0.0
-			msg_out.poses.append(ps)
+				# Start point
+				if i == 0:
+					goal_base.positions.append(req.start)
+				else:
+					goal_base.positions.append(res.path.poses[i].pose.position)
+				goal_base.yaws.append(0.0)
+				# End point
+				if i < (len(res.path.poses) - 1):
+					goal_base.positions.append(res.path.poses[i].pose.position)
+				else:
+					goal_base.positions.append(req.end)
+				goal_base.yaws.append(0.0)
 
-			# Instert the path recieved from breadcrumb
-			for sp in res.path.poses:
-				p = PoseStamped()
-				p.header = res.path.header
-				p.pose.position = sp.position
-				p.pose.orientation.w = 1.0
-				p.pose.orientation.x = 0.0
-				p.pose.orientation.y = 0.0
-				p.pose.orientation.z = 0.0
-				msg_out.poses.append(p)
+				goal_base.duration = rospy.Duration.from_sec(10)
 
-			#Insert the end pose
-			pe = PoseStamped()
-			pe.header = res.path.header
-			pe.pose.position = req.end
-			pe.pose.orientation.w = 1.0
-			pe.pose.orientation.x = 0.0
-			pe.pose.orientation.y = 0.0
-			pe.pose.orientation.z = 0.0
-			msg_out.poses.append(pe)
+				# Set a start time to be "start imidiately"
+				goal_base.start = rospy.Time(0)
 
-			self.pub_path.publish(msg_out)
+				# Transmit the goal to contrail
+				client_base.send_goal(goal_base)
+
 		else:
 			rospy.logerr("[NAV] No path received, abandoning planning")
 			return;

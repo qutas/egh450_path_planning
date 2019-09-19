@@ -10,9 +10,9 @@
 
 		<!-- These topics need to be remapped correctly! -->
 		<!-- Input to contrail for path tracking -->
-		<remap from="~path" to="path"/>
+		<remap from="~contrail" to="/emulated_uav/mavel/contrail"/>
 		<!-- Service to request a safe path from breadcrumb -->
-		<remap from="~request_path" to="request_path"/>
+		<remap from="~request_path" to="/breadcrumb/request_path"/>
 	</node>
 
 	<!-- Breadcrumb Node -->
