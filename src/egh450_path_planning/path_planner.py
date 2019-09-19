@@ -30,8 +30,8 @@ class PathPlanner():
 		self.srvc_bc = rospy.ServiceProxy('~request_path', RequestPath)
 
 		rospy.loginfo("Waiting for contrail to connect...")
-		client_base = actionlib.SimpleActionClient(rospy.get_param('~contrail'), TrajectoryAction)
-		client_base.wait_for_server()
+		self.client_base = actionlib.SimpleActionClient(rospy.get_param("~contrail"), TrajectoryAction)
+		self.client_base.wait_for_server()
 
 		# Needs to be connected to contrail
 		self.pub_path = rospy.Publisher('~planned_path', Path, queue_size=10, latch=True)
@@ -57,7 +57,7 @@ class PathPlanner():
 		msg_out.poses.append(ps)
 
 		# Instert the path recieved from breadcrumb
-		for sp in res.path.poses:
+		for sp in path.poses:
 			p = PoseStamped()
 			p.header = path.header
 			p.pose.position = sp.position
@@ -94,9 +94,9 @@ class PathPlanner():
 
 		if len(res.path.poses) > 0:
 			rospy.loginfo("[NAV] Path planned, preparing to transmit")
-			path_display(res.path, req.start, req.end)
+			self.path_display(res.path, req.start, req.end)
 
-			for i in xrange(len(req.path.poses)):
+			for i in xrange(len(res.path.poses)):
 				# Build new goal message
 				# https://github.com/qutas/contrail/blob/master/contrail/action/Trajectory.action
 				goal_base = TrajectoryGoal()
@@ -105,11 +105,11 @@ class PathPlanner():
 				if i == 0:
 					goal_base.positions.append(req.start)
 				else:
-					goal_base.positions.append(res.path.poses[i].pose.position)
+					goal_base.positions.append(res.path.poses[i].position)
 				goal_base.yaws.append(0.0)
 				# End point
 				if i < (len(res.path.poses) - 1):
-					goal_base.positions.append(res.path.poses[i].pose.position)
+					goal_base.positions.append(res.path.poses[i].position)
 				else:
 					goal_base.positions.append(req.end)
 				goal_base.yaws.append(0.0)
@@ -120,7 +120,8 @@ class PathPlanner():
 				goal_base.start = rospy.Time(0)
 
 				# Transmit the goal to contrail
-				client_base.send_goal(goal_base)
+				self.client_base.send_goal(goal_base)
+				self.client_base.wait_for_result()
 
 		else:
 			rospy.logerr("[NAV] No path received, abandoning planning")

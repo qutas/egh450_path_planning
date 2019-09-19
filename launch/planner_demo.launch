@@ -10,7 +10,7 @@
 
 		<!-- These topics need to be remapped correctly! -->
 		<!-- Input to contrail for path tracking -->
-		<remap from="~contrail" to="/emulated_uav/mavel/contrail"/>
+		<param name="~contrail" value="/emulated_uav/mavel/contrail" type='string'/>
 		<!-- Service to request a safe path from breadcrumb -->
 		<remap from="~request_path" to="/breadcrumb/request_path"/>
 	</node>
@@ -22,6 +22,6 @@
 		<param name="obstacle_threshold" value="50" type="int"/>
 
 		<!-- Occupancy grid input -->
-		<remap from="grid" to="/grid"/>
+		<remap from="grid" to="/grid/real"/>
 	</node>
 </launch>
