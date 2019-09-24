@@ -96,7 +96,7 @@ class PathPlanner():
 			rospy.loginfo("[NAV] Path planned, preparing to transmit")
 			self.path_display(res.path, req.start, req.end)
 
-			for i in xrange(len(res.path.poses)):
+			for i in xrange(len(res.path.poses) - 1):
 				# Build new goal message
 				# https://github.com/qutas/contrail/blob/master/contrail/action/Trajectory.action
 				goal_base = TrajectoryGoal()
