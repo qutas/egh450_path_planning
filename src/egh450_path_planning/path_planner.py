@@ -92,6 +92,7 @@ class PathPlanner():
 
 		res = self.srvc_bc(req)
 
+		# XXX: You could also use res.path_sparse (see breadcrumb docs)
 		if len(res.path.poses) > 0:
 			rospy.loginfo("[NAV] Path planned, preparing to transmit")
 			self.path_display(res.path, req.start, req.end)
