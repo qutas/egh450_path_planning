@@ -22,6 +22,6 @@
 		<param name="obstacle_threshold" value="50" type="int"/>
 
 		<!-- Occupancy grid input -->
-		<remap from="grid" to="/grid/real"/>
+		<remap from="~grid" to="/grid/real"/>
 	</node>
 </launch>
